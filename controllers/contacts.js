@@ -33,8 +33,35 @@ const addBulkContacts = asyncWrapper( async(req, res, next) => {
 
 const getAllContacts = asyncWrapper( async (req, res, next) => {
     const createdBy = req.user.userId;
-    const allContacts = await Contact.find({createdBy});
+    const { pageNumber, Limit, seemsLike } = req.query;
+    // console.log(req.query);
+    const toFindQuery = {createdBy};
+
+    if(seemsLike) {
+        toFindQuery.phoneNumber = { $regex:seemsLike, $options: 'i' };
+    }
+    let toSend = Contact.find(toFindQuery);
+
+    const page = Number(pageNumber) >= 1 ? Number(pageNumber) : 1;
+    const limit = Number(Limit) >= 1 ? Number(Limit) : 10;
+    const skip = (page-1)*limit;
+
+    toSend.skip(skip).limit(limit);
+
+    const allContacts = await toSend;
+    // console.log(toFindQuery);
     res.status(200).json({success: true, hits:allContacts.length ,allContacts});
+});
+
+const getContact = asyncWrapper( async(req,res,next) => {
+    const { id } = req.params;
+    const createdBy = req.user.userId;
+    const contact = await Contact.findOne({createdBy, phoneNumber: id });
+    if(!contact){
+        return next(createCustomError(`Cannot Find Contact with Number: ${id}`,406));
+    }
+
+    res.status(200).json({success: true, contact});
 });
 
 const updateContact = asyncWrapper( async (req, res, next) => {
@@ -76,6 +103,7 @@ module.exports = {
     createContact,
     addBulkContacts,
     getAllContacts,
+    getContact,
     updateContact,
     deleteContact
 };
