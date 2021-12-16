@@ -21,6 +21,22 @@ const createContact = asyncWrapper( async(req,res,next) => {
    res.status(200).json({success: true, contact});
 });
 
+const addBulkContacts = asyncWrapper( async(req, res, next) => {
+    const createdBy = req.user.userId;
+    const contacts = req.body;
+    contacts.forEach( contact => {
+        contact.createdBy = createdBy;
+    });
+    const bulkContacts = await Contact.create(contacts);
+    res.json({success: true, bulkContacts});
+});
+
+const getAllContacts = asyncWrapper( async (req, res, next) => {
+    const createdBy = req.user.userId;
+    const allContacts = await Contact.find({createdBy});
+    res.status(200).json({success: true, hits:allContacts.length ,allContacts});
+});
+
 const updateContact = asyncWrapper( async (req, res, next) => {
     const { id } = req.params;
     const { userId } = req.user;
@@ -58,6 +74,8 @@ const deleteContact = asyncWrapper( async (req,res,next) => {
 
 module.exports = {
     createContact,
+    addBulkContacts,
+    getAllContacts,
     updateContact,
     deleteContact
 };

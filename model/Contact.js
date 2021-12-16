@@ -4,7 +4,6 @@ const contactSchema = mongoose.Schema({
     name: {
         type: String,
         required: [true,'Please provide Name'],
-        minlength: 3,
         maxlength: 24
     },
     email: {
